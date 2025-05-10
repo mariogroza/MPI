@@ -22,10 +22,10 @@ def dpll(formula, assignment={}):
     formula = simplify(formula, assignment)
 
     if not formula:
-        return assignment  # Formula is satisfied (no clauses left)
+        return assignment  
 
     if any([clause == [] for clause in formula]):
-        return None  # Empty clause means conflict, unsatisfiable
+        return None  
 
     var = choose_variable(formula)
 
@@ -34,24 +34,24 @@ def dpll(formula, assignment={}):
         new_assignment[var] = val
         result = dpll(copy.deepcopy(formula), new_assignment)
         if result is not None:
-            return result  # Found a valid assignment
+            return result  
 
-    return None  # No valid assignment found, unsatisfiable
+    return None  
 
 
 def dp(formula):
     formula = copy.deepcopy(formula)
 
     if not formula:
-        return True  # Empty formula is satisfiable
+        return True 
 
     if any(clause == [] for clause in formula):
-        return False  # Empty clause means unsatisfiable
+        return False  
 
     vars = {abs(lit) for clause in formula for lit in clause}
 
     if not vars:
-        return True  # No variables left
+        return True 
 
     var = next(iter(vars))
     formula_with_var = eliminate_var(formula, var)
@@ -73,11 +73,11 @@ def resolution(formula):
         for (c1, c2) in pairs:
             resolvents = resolve(c1, c2)
             if frozenset() in resolvents:
-                return False  # Found empty clause, unsatisfiable
+                return False  
             new.update(resolvents)
 
         if new.issubset(clauses):
-            return True  # No new clauses added, formula is satisfiable
+            return True  
 
         clauses.update(new)
 
@@ -86,10 +86,10 @@ def cdcl(formula):
     formula = copy.deepcopy(formula)
 
     if not formula:
-        return {}  # Empty formula is satisfiable
+        return {}  
 
     if any(clause == [] for clause in formula):
-        return None  # Empty clause means unsatisfiable
+        return None  
 
     assignment = {}
     decision_level = 0
@@ -99,32 +99,32 @@ def cdcl(formula):
         unit_prop_result = unit_propagation(formula, assignment)
         if unit_prop_result is False:
             if decision_level == 0:
-                return None  # UNSAT - conflict at decision level 0
+                return None  
 
-            # Backtrack
+            
             while decision_stack and decision_stack[-1][1] == decision_level:
                 var, _ = decision_stack.pop()
                 del assignment[var]
 
             if not decision_stack:
-                return None  # UNSAT - no more decisions to backtrack
+                return None 
 
             last_decision_var, last_level = decision_stack.pop()
             decision_level = last_level
-            assignment[last_decision_var] = False  # Flip the decision
+            assignment[last_decision_var] = False 
             decision_stack.append((last_decision_var, decision_level))
             continue
 
-        # Check if all variables are assigned
+       
         all_vars = set(abs(lit) for clause in formula for lit in clause)
         unassigned_vars = [var for var in all_vars if var not in assignment]
 
         if not unassigned_vars:
-            return assignment  # All variables assigned without conflict - SAT
+            return assignment  
 
-        # Make a new decision
+        
         decision_level += 1
-        var = unassigned_vars[0]  # Choose the first unassigned variable
+        var = unassigned_vars[0]  
         assignment[var] = True
         decision_stack.append((var, decision_level))
 
@@ -133,27 +133,27 @@ def unit_propagation(formula, assignment):
     formula = simplify(formula, assignment)
 
     if not formula:
-        return True  # Empty formula is satisfiable
+        return True  
 
     if any(clause == [] for clause in formula):
-        return False  # Empty clause means unsatisfiable
+        return False  
 
-    # Find unit clauses
+    
     unit_clauses = [clause[0] for clause in formula if len(clause) == 1]
 
     if not unit_clauses:
-        return True  # No unit clauses to propagate
+        return True  
 
     for lit in unit_clauses:
         var = abs(lit)
         val = lit > 0
 
         if var in assignment and assignment[var] != val:
-            return False  # Conflict in assignment
+            return False  
 
         assignment[var] = val
 
-    # Recursively continue unit propagation
+   
     return unit_propagation(simplify(formula, assignment), assignment)
 
 
@@ -179,13 +179,13 @@ def simplify(formula, assignment):
         if new_clause:
             new_formula.append(new_clause)
         else:
-            new_formula.append([])  # Empty clause indicates unsatisfiable
+            new_formula.append([])  
 
     return new_formula
 
 
 def choose_variable(formula):
-    # Use a simple heuristic: choose the variable that appears most frequently
+    
     var_count = {}
 
     for clause in formula:
@@ -204,14 +204,14 @@ def eliminate_var(formula, var):
     neg_clauses = [c for c in formula if -var in c]
     other_clauses = [c for c in formula if var not in c and -var not in c]
 
-    # Generate resolvents
+    
     resolvents = []
     for pos in pos_clauses:
         for neg in neg_clauses:
             resolvent = [lit for lit in pos + neg if lit != var and lit != -var]
-            # Remove duplicates
+            
             resolvent = list(set(resolvent))
-            # Check if resolvent is a tautology
+            
             if not any(lit in resolvent and -lit in resolvent for lit in resolvent):
                 resolvents.append(resolvent)
 
@@ -226,7 +226,7 @@ def resolve(c1, c2):
     for lit in c1_set:
         if -lit in c2_set:
             resolvent = (c1_set | c2_set) - {lit, -lit}
-            # Skip tautological clauses
+            
             if not any(-l in resolvent for l in resolvent):
                 resolvents.add(frozenset(resolvent))
 
@@ -237,7 +237,7 @@ class TimeoutException(Exception):
     pass
 
 
-# Windows-compatible timeout implementation
+
 def run_with_timeout(func, args=(), kwargs={}, timeout_duration=10):
     """Run a function with a timeout using threading (works on Windows)"""
     result = [None]
